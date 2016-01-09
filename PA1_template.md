@@ -1,8 +1,3 @@
----
-output:
-  html_document:
-    keep_md: yes
----
 # Reproducible Research: Peer Assessment 1
 
 ---  
@@ -16,24 +11,90 @@ This section will set the working directory
 Read the csv file into a data frame  
 Transform the date column to a date type  
 Finally install dplyr and ggplot2 packages for use later  
-```{r, echo=TRUE}
+
+```r
 setwd('/Users/jonporterjones/Coursera/ReproducibleResearch/AssignmentI/Repo/RepData_PeerAssessment1')
 SourceData=read.csv('activity.csv')
 SourceData$date=as.Date(SourceData$date)
 install.packages("dplyr", repos="http://cran.rstudio.com/") 
+```
+
+```
+## 
+## The downloaded binary packages are in
+## 	/var/folders/8r/hlflpx4n7817hg42wwdjks3w0000gn/T//RtmpKmJacf/downloaded_packages
+```
+
+```r
 library(dplyr)
+```
+
+```
+## Warning: package 'dplyr' was built under R version 3.1.2
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following object is masked from 'package:stats':
+## 
+##     filter
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 install.packages("ggplot2", repos="http://cran.rstudio.com/") 
+```
+
+```
+## 
+##   There is a binary version available (and will be installed) but
+##   the source version is later:
+##         binary source
+## ggplot2  1.0.1  2.0.0
+## 
+## 
+## The downloaded binary packages are in
+## 	/var/folders/8r/hlflpx4n7817hg42wwdjks3w0000gn/T//RtmpKmJacf/downloaded_packages
+```
+
+```r
 library(ggplot2)
+```
+
+```
+## Warning: package 'ggplot2' was built under R version 3.1.3
 ```
 
 ## What is mean total number of steps taken per day?
 1. Make a histogram of the total number of steps taken each day
 2. Calculate and report the **mean** and **median** total number of steps taken per day
-```{r, echo=TRUE}
+
+```r
 stepsPerDay=with(SourceData,tapply(steps,date,sum,na.rm=T))
 hist(stepsPerDay)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-2-1.png) 
+
+```r
 mean(stepsPerDay) 
+```
+
+```
+## [1] 9354.23
+```
+
+```r
 median(stepsPerDay)
+```
+
+```
+## [1] 10395
 ```
 
 ## What is the average daily activity pattern?
@@ -44,11 +105,22 @@ median(stepsPerDay)
 - The result of this is an array, force this to a dataframe by converting the interval back to an integer and coercing the array containing the averages into a vector
 - then create the plot using the data frame.
 - the last line will give you the row from the data frame containing the highest average.  It is ** Interval 835 ** and this is consistent with our plot
-```{r, echo=TRUE}
+
+```r
 AverageByInterval=with(SourceData,tapply(steps,interval,mean,na.rm=T)) 
 AverageByIntervalFrame = data.frame("Interval"=as.integer(names(AverageByInterval)),"Average"=as.vector(AverageByInterval)) 
 plot(AverageByIntervalFrame$Interval,AverageByIntervalFrame$Average,type="l",xlab="5 minute interval",ylab="average number of steps")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
+
+```r
 AverageByIntervalFrame[AverageByIntervalFrame$Average==max(AverageByIntervalFrame$Average),] 
+```
+
+```
+##     Interval  Average
+## 104      835 206.1698
 ```
 
 ## Imputing missing values
@@ -62,9 +134,17 @@ Strategy used is the mean for the 5 minute interval.
 The values do not differ by much.  The histograms look similar and the mean/median are close to one another as well.  This is because when you add an average to missing values in a data set that already contains the averages, you don't change the average by much.  The replacement values are the mean, so the mean of the whole data set does not change significantly.
 ** this time the comments are in the R code. **
 This code gets a little complicated - probably more efficient way to do this  
-```{r, echo=TRUE}
+
+```r
 SourceLogical = is.na(SourceData$steps) #this creates a logical vector containing the na's
 sum(SourceLogical) # There are 2304 rows with NA values for steps.
+```
+
+```
+## [1] 2304
+```
+
+```r
 SourceNAOnly=SourceData[SourceLogical,] # This creates a data frame only of the nulls.
 #Merge data frame of averages with data frame of NA's.
 SourceNAOnlyMergedWithAverage=merge(AverageByIntervalFrame,SourceNAOnly, by.x = "Interval", by.y = "interval")
@@ -80,14 +160,31 @@ StepsPerDayBoundWithAverage=with(SourceDataBoundWithAverage,tapply(steps,date,su
 par(mfrow=c(2,1))
 hist(stepsPerDay)
 hist(StepsPerDayBoundWithAverage)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
+
+```r
 mean(StepsPerDayBoundWithAverage) 
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(StepsPerDayBoundWithAverage)
+```
+
+```
+## [1] 10766.19
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
 1. Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
 1. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
-```{r, echo=TRUE}
+
+```r
 SourceData$daysofweek = as.factor(weekdays(SourceData$date))
 weekendLogical=as.logical(SourceData$daysofweek=='Saturday') | as.logical(SourceData$daysofweek=='Sunday')
 SourceData$IsWeekend=as.factor(ifelse(weekendLogical,"Weekend","Weekday"))
@@ -96,3 +193,5 @@ SourceDataGroupedAndAveraged=summarise(SourceDataGrouped,mean(steps,na.rm=T))
 names(SourceDataGroupedAndAveraged) = c("interval","IsWeekend","Average")
 qplot(interval, Average, data = SourceDataGroupedAndAveraged,facets=.~IsWeekend,geom="line")
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 

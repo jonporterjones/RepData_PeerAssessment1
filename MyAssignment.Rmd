@@ -1,0 +1,132 @@
+---
+title: "AssignmentI"
+author: "Jon Jones"
+date: "January 5, 2016"
+output: html_document
+---
+# to make a plot and embed only the plot set echo = FALSE 
+
+```{r}
+setwd('/Users/jonporterjones/Coursera/ReproducibleResearch/AssignmentI/Repo/RepData_PeerAssessment1')
+data=read.csv('activity.csv',stringsAsFactors=FALSE)
+data$date=as.Date(data$date)
+str(data)
+head(data)
+stepsPerDay=with(data,tapply(steps,date,sum,na.rm=T))
+stepsPerDay
+mean(stepsPerDay) # Calculate the mean
+median(stepsPerDay)
+apply(stepsPerDay,2,mean)
+meanStepsPerDay=with(data,tapply(steps,date,mean,na.rm=T))
+meanStepsPerDay
+class(stepsPerDay)
+hist(stepsPerDay) # I guess this actually is a hist as opposed to a plot.  It lists the number of times this many steps were taken per day.
+str(data)
+class(data)
+```
+Now I'm past the first part on to part
+II.
+1. Make a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+group by date and interval and take the average number of steps
+```{r, echo=TRUE}
+DataGrouped=with(data,tapply(steps,interval,mean,na.rm=T)) 
+test = data.frame(names(DataGrouped),DataGrouped) # This will build this into a data frame
+max(test$DataGrouped)
+test[test$DataGrouped==max(test$DataGrouped),]  # This is it - this is the 5 minute interval with the max!!!
+head(DataGrouped)
+# I don't like that the output of this is an array - makes it hard to deal with
+DataGrouped[2]
+names(DataGrouped)
+str(test)
+plot(test$names.DataGrouped.,test$DataGrouped,type="l",xlab="5 minute interval",ylab="average number of steps")
+plot(names(DataGrouped),DataGrouped,type="l",xlab="5 minute interval",ylab="average number of steps")
+class(max(DataGrouped))
+m[which(m[,4]!=0),]
+DataGrouped[which(DataGrouped=206.1698)]  # I can't quite find how to do this to find the element in the array with the max value - turn into a data frame or matrix?
+```
+### Imputing missing values
+
+Note that there are a number of days/intervals where there are missing
+values (coded as `NA`). The presence of missing days may introduce
+bias into some calculations or summaries of the data.
+
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NA`s)
+
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the **mean** and **median** total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+```{r, echo=TRUE}
+xLogical = is.na(data$steps) #this creates a logical vector containing the na's
+sum(xLogical) # There are 2304 rows with NA values for steps.
+GroupedLogical=data[xLogical,]
+head(GroupedLogical)
+
+# get column test$DataGrouped and set it to GroupedLogical.Steps where test$names.DataGrouped = GroupedLogical.interval
+#x=merge(test$names.DataGrouped,GroupedLogical$interval)
+x=merge(test,GroupedLogical, by.x = "names.DataGrouped.", by.y = "interval") # This is it, but it is only the logical vector that contained the nulls
+# now I have to add back the rows that were not NA
+head(x[,c('DataGrouped','date','names.DataGrouped.')]) # this is my data frame
+data[!xLogical]
+bind1=data[!xLogical,]
+bind2=x[,c('DataGrouped','date','names.DataGrouped.')]
+sapply(bind2, class) 
+bind2$DataGrouped=as.integer(bind2$DataGrouped)
+bind2$names.DataGrouped.=as.integer(bind2$names.DataGrouped.)
+myNewFrame=rbind(bind1,bind2) #rbind matches by name, so I'll have to get the names correct.
+head(data)
+head(GroupedLogical)
+head(x)
+names(GroupedLogical)
+```
+
+### Are there differences in activity patterns between weekdays and weekends?
+
+For this part the `weekdays()` function may be of some help here. Use
+the dataset with the filled-in missing values for this part.
+
+1. Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+
+1. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using **simulated data**:
+
+```{r, echo=TRUE}
+SourceData$daysofweek = as.factor(weekdays(SourceData$date))
+weekendLogical=as.logical(SourceData$daysofweek=='Saturday') | as.logical(SourceData$daysofweek=='Sunday')
+SourceData$IsWeekend=as.factor(ifelse(weekendLogical,"Weekend","Weekday"))
+sapply(SourceData, class) 
+head(SourceData)
+SourceData=cbind(SourceData,weekendLogical)
+head(SourceData)
+install.packages("dplyr")
+library(dplyr)
+SourceDataGrouped=group_by(SourceData,interval, weekendLogical)  #group_by creates factor groups
+SourceDataGroupedAndAveraged=summarise(SourceDataGrouped,mean(steps,na.rm=T))
+str(SourceDataGroupedAndAveraged)
+names(SourceDataGroupedAndAveraged) = c("interval","weekendLogical","Average")
+SourceDataGroupedAndAveraged[1,]
+install.packages("ggplot2")
+library(ggplot2)
+
+qplot(interval, Average, data = SourceDataGroupedAndAveraged,facets=.~weekendLogical,geom="line")
+head(SourceDataGrouped)
+#summarise_each(tbl, funs, ...)
+MergeTrainDataAndTestDataGrouped=summarise_each(MergeTrainDataAndTestDataGrouped,funs(mean)) 
+
+WeekendGrouped=with(WeekendFrame,tapply(steps,interval,mean,na.rm=T)) 
+WeekdayGrouped=with(WeekdayFrame,tapply(steps,interval,mean,na.rm=T)) 
+WeekendGroupedFrame=data.frame(names(WeekendGrouped),as.double(WeekendGrouped))
+WeekdayGroupedFrame=data.frame(names(WeekdayGrouped),WeekdayGrouped)
+head(WeekdayGrouped)
+par(mfrow=c(2,1))
+head(WeekendGroupedFrame)
+names(WeekendGroupedFrame)
+plot(WeekendGroupedFrame$names.WeekendGrouped.,WeekendGroupedFrame$as.double.WeekendGrouped.)
+,type="l",xlab="5 minute interval",ylab="average number of steps")
+plot(names(WeekdayGroupedFrame),WeekdayGroupedFrame,type="l",xlab="5 minute interval",ylab="average number of steps")
+
+sapply(WeekendGroupedFrame, class) 
+head(data)
+
+```
